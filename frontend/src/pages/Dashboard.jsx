@@ -29,7 +29,7 @@ export default function Dashboard({ data, onBack }) {
         </header>
 
         {/* Hero + summary card */}
-        <HeroSection data={data} />
+        <HeroSection data={data} onBack={onBack} />
 
         {/* Top statistics row */}
         <StatsRow data={data} />

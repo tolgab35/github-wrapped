@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 
-export default function HeroSection({ data }) {
+export default function HeroSection({ data, onBack }) {
   const {
     login,
     name,
@@ -40,21 +40,17 @@ export default function HeroSection({ data }) {
           habits.
         </motion.p>
 
-        <motion.button
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
+        <button
+          onClick={onBack}
           className="
-            inline-flex items-center gap-2
-            px-5 py-2.5 rounded-full text-sm font-semibold
-            bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
-            shadow-lg shadow-purple-500/30
-            hover:brightness-110 hover:translate-y-[1px]
-            transition
-          "
+    mt-6 px-5 py-2 rounded-full font-medium
+    bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+    text-white shadow-lg hover:brightness-110 hover:scale-[1.02]
+    transition-all
+  "
         >
-          Explore Your Year
-        </motion.button>
+          Generate Again
+        </button>
       </div>
 
       {/* Right side: small card / avatar / short summary */}
