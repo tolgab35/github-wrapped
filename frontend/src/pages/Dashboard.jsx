@@ -4,6 +4,7 @@ import StatsRow from "../components/dashboard/StatsRow";
 import HighlightsSection from "../components/dashboard/HighlightsSection";
 import TopLanguages from "../components/dashboard/TopLanguages";
 import TopRepos from "../components/dashboard/TopRepos";
+import CommitActivity from "../components/dashboard/CommitActivity";
 
 export default function Dashboard({ data, onBack }) {
   return (
@@ -26,17 +27,24 @@ export default function Dashboard({ data, onBack }) {
           </button>
         </header>
 
-        {/* Hero + right visual/stat summary section */}
+        {/* Hero + summary card */}
         <HeroSection data={data} />
 
-        {/* Top statistics cards (commits, PRs, etc.) */}
+        {/* Top statistics row */}
         <StatsRow data={data} />
 
+        {/* Highlights */}
         <HighlightsSection data={data} />
 
+        {/* Top Languages + Top Repositories grid */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
           <TopLanguages languages={data.topLanguages} />
           <TopRepos repos={data.topRepos} />
+        </div>
+
+        {/* Commit Activity Graph */}
+        <div className="mt-12">
+          <CommitActivity monthlyData={data.monthlyCommits} />
         </div>
       </div>
     </div>
