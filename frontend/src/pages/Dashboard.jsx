@@ -5,6 +5,7 @@ import HighlightsSection from "../components/dashboard/HighlightsSection";
 import TopLanguages from "../components/dashboard/TopLanguages";
 import TopRepos from "../components/dashboard/TopRepos";
 import CommitActivity from "../components/dashboard/CommitActivity";
+import Footer from "../components/dashboard/Footer";
 
 export default function Dashboard({ data, onBack }) {
   return (
@@ -46,6 +47,8 @@ export default function Dashboard({ data, onBack }) {
         <div className="mt-12">
           <CommitActivity monthlyData={data.monthlyCommits} />
         </div>
+
+        <Footer />
       </div>
     </div>
   );
