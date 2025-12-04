@@ -199,6 +199,32 @@ function calculateGrowth(c2025, c2024) {
   };
 }
 
+// Commit counts for each month
+function getMonthlyCommits(calendar) {
+  const monthly = {
+    Jan: 0,
+    Feb: 0,
+    Mar: 0,
+    Apr: 0,
+    May: 0,
+    Jun: 0,
+    Jul: 0,
+    Aug: 0,
+    Sep: 0,
+    Oct: 0,
+    Nov: 0,
+    Dec: 0,
+  };
+
+  for (const day of calendar) {
+    const monthIndex = new Date(day.date).getMonth(); // 0–11
+    const monthName = Object.keys(monthly)[monthIndex];
+    monthly[monthName] += day.count;
+  }
+
+  return monthly;
+}
+
 // Main endpoint
 app.get("/api/wrapped/:username", async (req, res) => {
   try {
@@ -261,6 +287,7 @@ app.get("/api/wrapped/:username", async (req, res) => {
         data.user.contributionsCollection2025,
         data.user.contributionsCollection2024
       ),
+      monthlyCommits: getMonthlyCommits(calendar),
     };
 
     res.json(response);
