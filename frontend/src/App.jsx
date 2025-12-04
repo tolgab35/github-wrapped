@@ -31,12 +31,12 @@ function App() {
     setError(null);
   };
 
-  // Henüz wrappedData yoksa → giriş ekranı
+  // If wrappedData is not available yet → show entry screen
   if (!wrappedData) {
     return <Home onGenerate={handleGenerate} loading={loading} error={error} />;
   }
 
-  // Veri geldiyse → dashboard
+  // If data is available → show dashboard
   return <Dashboard data={wrappedData} onBack={handleReset} />;
 }
 

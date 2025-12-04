@@ -14,7 +14,7 @@ export default function HeroSection({ data }) {
 
   return (
     <section className="mb-10 grid gap-8 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] items-center">
-      {/* Sol taraf: başlık + açıklama + buton */}
+      {/* Left side: title + description + button */}
       <div>
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
@@ -57,7 +57,7 @@ export default function HeroSection({ data }) {
         </motion.button>
       </div>
 
-      {/* Sağ taraf: küçük kart / avatar / kısa özet */}
+      {/* Right side: small card / avatar / short summary */}
       <motion.div
         initial={{ opacity: 0, x: 10 }}
         animate={{ opacity: 1, x: 0 }}
@@ -69,7 +69,7 @@ export default function HeroSection({ data }) {
           shadow-[0_0_40px_rgba(80,80,255,0.3)]
         "
       >
-        {/* Kullanıcı info */}
+        {/* User info */}
         <div className="flex items-center gap-3">
           <img
             src={avatarUrl}
