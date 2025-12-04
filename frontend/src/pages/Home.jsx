@@ -5,6 +5,11 @@ import { FiAtSign, FiGithub } from "react-icons/fi";
 export default function Home({ onGenerate }) {
   const [username, setUsername] = useState("");
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (username.trim()) onGenerate(username);
+  };
+
   return (
     <div className="w-full h-screen flex items-center justify-center bg-[#0d0b1f] relative overflow-hidden">
       {/* Background blur / glow */}
@@ -36,12 +41,12 @@ export default function Home({ onGenerate }) {
         >
           <div
             className="
-      w-14 h-14 
-      bg-purple-500/20 
-      rounded-full 
-      flex items-center justify-center
-      shadow-[0_0_25px_rgba(155,90,255,0.45)]
-    "
+              w-14 h-14 
+              bg-purple-500/20 
+              rounded-full 
+              flex items-center justify-center
+              shadow-[0_0_25px_rgba(155,90,255,0.45)]
+            "
           >
             <FiGithub className="text-purple-300 text-3xl" />
           </div>
@@ -58,39 +63,41 @@ export default function Home({ onGenerate }) {
         </p>
 
         {/* Input */}
-        <div className="mb-5">
-          <div className="relative">
-            <FiAtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-lg" />
+        <form onSubmit={handleSubmit}>
+          <div className="mb-5">
+            <div className="relative">
+              <FiAtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-lg" />
 
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="
-                w-full bg-white/10 text-white 
-                pl-12 pr-4 py-3 rounded-full
-                placeholder-white/40
-                border border-white/10
-                focus:outline-none focus:ring-2 focus:ring-purple-500/40
-              "
-              placeholder="GitHub Username"
-              type="text"
-            />
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="
+                  w-full bg-white/10 text-white 
+                  pl-12 pr-4 py-3 rounded-full
+                  placeholder-white/40
+                  border border-white/10
+                  focus:outline-none focus:ring-2 focus:ring-purple-500/40
+                "
+                placeholder="GitHub Username"
+                type="text"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Button */}
-        <button
-          onClick={() => username.trim() && onGenerate(username)}
-          className="
-            w-full py-3 rounded-full font-semibold 
-            bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
-            text-white shadow-lg
-            hover:brightness-110 hover:scale-[1.02]
-            transition-all
-          "
-        >
-          Generate Your Wrapped
-        </button>
+          {/* Button */}
+          <button
+            type="submit"
+            className="
+              w-full py-3 rounded-full font-semibold 
+              bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
+              text-white shadow-lg
+              hover:brightness-110 hover:scale-[1.02]
+              transition-all
+            "
+          >
+            Generate Your Wrapped
+          </button>
+        </form>
       </motion.div>
     </div>
   );
