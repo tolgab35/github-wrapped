@@ -1,7 +1,9 @@
-import { FiAtSign, FiGithub } from "react-icons/fi";
+import { FiGithub } from "react-icons/fi";
 import HeroSection from "../components/dashboard/HeroSection";
 import StatsRow from "../components/dashboard/StatsRow";
 import HighlightsSection from "../components/dashboard/HighlightsSection";
+import TopLanguages from "../components/dashboard/TopLanguages";
+import TopRepos from "../components/dashboard/TopRepos";
 
 export default function Dashboard({ data, onBack }) {
   return (
@@ -31,6 +33,11 @@ export default function Dashboard({ data, onBack }) {
         <StatsRow data={data} />
 
         <HighlightsSection data={data} />
+
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TopLanguages languages={data.topLanguages} />
+          <TopRepos repos={data.topRepos} />
+        </div>
       </div>
     </div>
   );
