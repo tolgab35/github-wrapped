@@ -1,7 +1,11 @@
 export default function TopLanguages({ languages }) {
   const cardClass = `
-    bg-white/5 border border-white/10 backdrop-blur-xl
-    rounded-2xl p-6 shadow-[0_0_30px_rgba(0,0,0,0.25)]
+    bg-white/5 rounded-2xl p-6 
+    border border-white/10
+    backdrop-blur-lg
+    shadow-[0_0_25px_rgba(15,23,42,0.8)]
+    hover:border-purple-400/60 hover:shadow-[0_0_25px_rgba(120,80,255,0.5)]
+    transition
   `;
 
   return (

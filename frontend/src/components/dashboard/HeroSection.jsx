@@ -35,9 +35,8 @@ export default function HeroSection({ data, onBack }) {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-sm md:text-base text-white/60 max-w-xl mb-6"
         >
-          An animated and personalized summary of your coding journey over the
-          past year. See your top languages, biggest projects, and unique coding
-          habits.
+          A personalized summary of your coding journey over the past year. See
+          your top languages, biggest projects, and unique coding habits.
         </motion.p>
 
         <button
