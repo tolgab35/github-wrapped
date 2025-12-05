@@ -54,7 +54,16 @@ export default function App() {
 
     if (!wrappedData || loading) return <LoadingScreen stage="fetching" />;
 
-    return <Dashboard data={wrappedData} onBack={() => navigate("/")} />;
+    return (
+      <Dashboard
+        data={wrappedData}
+        onBack={() => navigate("/")}
+        onGenerateAgain={() => {
+          setWrappedData(null);
+          fetchWrapped(username);
+        }}
+      />
+    );
   }
 
   return (

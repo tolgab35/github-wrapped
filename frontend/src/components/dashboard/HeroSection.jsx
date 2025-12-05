@@ -11,7 +11,7 @@ import {
   Target,
 } from "lucide-react";
 
-export default function HeroSection({ data, onGoHome }) {
+export default function HeroSection({ data, onGoHome, onGenerateAgain }) {
   const {
     login,
     name,
@@ -168,7 +168,7 @@ export default function HeroSection({ data, onGoHome }) {
         )}
 
         <button
-          onClick={onGoHome}
+          onClick={onGenerateAgain}
           className="
             group relative px-6 py-3 rounded-xl font-semibold text-sm
             bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-indigo-600/20

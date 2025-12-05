@@ -14,7 +14,7 @@ import RateLimitBanner from "../components/dashboard/RateLimitBanner";
 
 import generateHighlights from "../lib/generateHighlights";
 
-export default function Dashboard({ data, onBack }) {
+export default function Dashboard({ data, onBack, onGenerateAgain }) {
   const [generatedHighlights, setGeneratedHighlights] = useState([]);
   const [isLoadingHighlights, setIsLoadingHighlights] = useState(true);
 
@@ -106,7 +106,11 @@ export default function Dashboard({ data, onBack }) {
         {data.rateLimit && <RateLimitBanner rateLimit={data.rateLimit} />}
 
         <div className="dashboard-container">
-          <HeroSection data={data} onGoHome={generateAIHighlights} />
+          <HeroSection
+            data={data}
+            onGoHome={generateAIHighlights}
+            onGenerateAgain={onGenerateAgain}
+          />
           <StatsRow data={data} />
 
           {/* AI tarafı direkt buraya gidiyor */}
