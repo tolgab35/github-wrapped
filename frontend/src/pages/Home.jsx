@@ -7,7 +7,10 @@ export default function Home({ onGenerate }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (username.trim()) onGenerate(username);
+    const clean = username.trim();
+    if (clean) {
+      onGenerate(clean);
+    }
   };
 
   return (
@@ -18,7 +21,6 @@ export default function Home({ onGenerate }) {
         <div className="absolute w-[500px] h-[500px] bg-blue-600/30 blur-[200px] rounded-full right-[-150px] bottom-[-150px]" />
       </div>
 
-      {/* CARD */}
       <motion.div
         initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -52,17 +54,16 @@ export default function Home({ onGenerate }) {
           </div>
         </motion.div>
 
-        {/* Title */}
         <h1 className="text-3xl font-bold text-center text-white mb-3">
           Your Year in Code
         </h1>
+
         <p className="text-center text-white/60 mb-8">
           Enter your GitHub username to generate your
           <br />
           2025 Wrapped.
         </p>
 
-        {/* Input */}
         <form onSubmit={handleSubmit}>
           <div className="mb-5">
             <div className="relative">
@@ -84,7 +85,6 @@ export default function Home({ onGenerate }) {
             </div>
           </div>
 
-          {/* Button */}
           <button
             type="submit"
             className="

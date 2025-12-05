@@ -8,10 +8,17 @@ import CommitActivity from "../components/dashboard/CommitActivity";
 import Footer from "../components/dashboard/Footer";
 
 export default function Dashboard({ data, onBack }) {
+  if (!data) {
+    return (
+      <div className="text-white text-center mt-20">
+        <p>Loading failed or data missing.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#050718] text-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Top bar */}
         <header className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
             <FiGithub className="text-2xl text-purple-400" />
@@ -28,22 +35,17 @@ export default function Dashboard({ data, onBack }) {
           </button>
         </header>
 
-        {/* Hero + summary card */}
-        <HeroSection data={data} onBack={onBack} />
+        <HeroSection data={data} />
 
-        {/* Top statistics row */}
         <StatsRow data={data} />
 
-        {/* Highlights */}
         <HighlightsSection data={data} />
 
-        {/* Top Languages + Top Repositories grid */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
           <TopLanguages languages={data.topLanguages} />
           <TopRepos repos={data.topRepos} />
         </div>
 
-        {/* Commit Activity Graph */}
         <div className="mt-12">
           <CommitActivity monthlyData={data.monthlyCommits} />
         </div>
