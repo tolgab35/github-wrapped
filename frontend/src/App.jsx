@@ -22,7 +22,8 @@ export default function App() {
     setError(null);
 
     try {
-      const res = await fetch(`http://localhost:3001/api/wrapped/${username}`);
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${API_URL}/api/wrapped/${username}`);
 
       if (!res.ok) {
         const errorData = await res.json();
