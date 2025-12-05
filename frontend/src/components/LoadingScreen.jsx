@@ -5,7 +5,11 @@ import { useEffect, useState } from "react";
 const loadingStages = [
   { text: "Analyzing your GitHub profile...", icon: FiGithub, duration: 2000 },
   { text: "Fetching your repositories...", icon: FiCode, duration: 2000 },
-  { text: "Calculating your statistics...", icon: FiTrendingUp, duration: 2000 },
+  {
+    text: "Calculating your statistics...",
+    icon: FiTrendingUp,
+    duration: 2000,
+  },
   { text: "Generating personalized insights...", icon: FiStar, duration: 2000 },
 ];
 
@@ -39,15 +43,17 @@ export default function LoadingScreen({ stage = "default" }) {
     return () => clearInterval(progressInterval);
   }, [stage]);
 
-  const CurrentIcon = stage === "fetching" 
-    ? loadingStages[currentStage]?.icon || FiGithub 
-    : FiGithub;
+  const CurrentIcon =
+    stage === "fetching"
+      ? loadingStages[currentStage]?.icon || FiGithub
+      : FiGithub;
 
-  const displayText = stage === "fetching" 
-    ? loadingStages[currentStage]?.text || "Generating your Wrapped…"
-    : stage === "highlights" 
-    ? "Generating AI-powered highlights..." 
-    : "Generating your Wrapped…";
+  const displayText =
+    stage === "fetching"
+      ? loadingStages[currentStage]?.text || "Generating your Wrapped…"
+      : stage === "highlights"
+      ? "Generating AI-powered highlights..."
+      : "Generating your Wrapped…";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#050718]">
@@ -67,7 +73,8 @@ export default function LoadingScreen({ stage = "default" }) {
         <motion.div
           className="absolute inset-0 rounded-full border-4 border-purple-500/30"
           style={{
-            boxShadow: "0 0 40px rgba(168, 85, 247, 0.5), 0 0 80px rgba(236, 72, 153, 0.3)",
+            boxShadow:
+              "0 0 40px rgba(168, 85, 247, 0.5), 0 0 80px rgba(236, 72, 153, 0.3)",
           }}
           animate={{
             scale: [1, 1.12, 1],
