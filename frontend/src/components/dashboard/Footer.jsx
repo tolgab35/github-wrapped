@@ -16,8 +16,15 @@ export default function Footer() {
 
       {/* Year & copyright info */}
       <p className="text-[11px] text-white/25 tracking-wide">
-        © {new Date().getFullYear()} GitHub Wrapped • Created for fun, not for
-        profit.
+        © {new Date().getFullYear()} GitHub Wrapped •{" "}
+        <a
+          href="https://github.com/tolgab35"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-purple-400/60 hover:text-purple-400 transition-colors duration-200"
+        >
+          tolgab35
+        </a>
       </p>
 
       {/* Subtle bottom glow */}
