@@ -1,5 +1,5 @@
 import { Routes, Route, useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
@@ -12,12 +12,11 @@ export default function App() {
   const navigate = useNavigate();
 
   const fetchWrapped = async (username) => {
-    setError(null);
     setLoading(true);
+    setError(null);
 
     try {
       const res = await fetch(`http://localhost:3001/api/wrapped/${username}`);
-
       if (!res.ok) throw new Error("User not found");
 
       const data = await res.json();
@@ -25,12 +24,27 @@ export default function App() {
 
       navigate(`/wrapped/${username}`);
     } catch (err) {
-      setError(err.message);
       console.error(err);
+      setError(err.message);
+      navigate("/");
     } finally {
       setLoading(false);
     }
   };
+
+  function WrappedLoader() {
+    const { username } = useParams();
+
+    useEffect(() => {
+      if (wrappedData || loading) return;
+
+      fetchWrapped(username);
+    }, [username, wrappedData, loading]);
+
+    if (!wrappedData || loading) return <LoadingScreen />;
+
+    return <Dashboard data={wrappedData} onBack={() => navigate("/")} />;
+  }
 
   return (
     <>
@@ -42,14 +56,7 @@ export default function App() {
           element={<Home onGenerate={fetchWrapped} error={error} />}
         />
 
-        <Route
-          path="/wrapped/:username"
-          element={
-            wrappedData ? (
-              <Dashboard data={wrappedData} onBack={() => navigate("/")} />
-            ) : null
-          }
-        />
+        <Route path="/wrapped/:username" element={<WrappedLoader />} />
       </Routes>
     </>
   );
