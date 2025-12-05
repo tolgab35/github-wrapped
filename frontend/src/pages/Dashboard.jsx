@@ -9,6 +9,7 @@ import TopRepos from "../components/dashboard/TopRepos";
 import CommitActivity from "../components/dashboard/CommitActivity";
 import Footer from "../components/dashboard/Footer";
 import LoadingScreen from "../components/LoadingScreen";
+import ShareButton from "../components/dashboard/ShareButton";
 
 import generateHighlights from "../lib/generateHighlights";
 
@@ -69,47 +70,52 @@ export default function Dashboard({ data, onBack }) {
             </div>
           </div>
 
-          <button
-            onClick={onBack}
-            className="
-              group flex items-center gap-2 px-4 py-2 rounded-xl 
-              bg-white/5 hover:bg-white/10 
-              border border-white/10 hover:border-purple-400/30
-              text-white/70 hover:text-white text-sm font-medium
-              shadow-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]
-              transition-all duration-300 backdrop-blur-sm
-            "
-          >
-            <svg
-              className="w-4 h-4 transition-transform group-hover:-translate-x-1 duration-300"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="flex items-center gap-3">
+            <ShareButton username={data.username} />
+            <button
+              onClick={onBack}
+              className="
+                group flex items-center gap-2 px-4 py-2 rounded-xl 
+                bg-white/5 hover:bg-white/10 
+                border border-white/10 hover:border-purple-400/30
+                text-white/70 hover:text-white text-sm font-medium
+                shadow-lg hover:shadow-[0_0_20px_rgba(168,85,247,0.2)]
+                transition-all duration-300 backdrop-blur-sm
+              "
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
-            Back
-          </button>
+              <svg
+                className="w-4 h-4 transition-transform group-hover:-translate-x-1 duration-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                />
+              </svg>
+              Back
+            </button>
+          </div>
         </header>
 
-        <HeroSection data={data} onGoHome={generateAIHighlights} />
-        <StatsRow data={data} />
+        <div className="dashboard-container">
+          <HeroSection data={data} onGoHome={generateAIHighlights} />
+          <StatsRow data={data} />
 
-        {/* AI tarafı direkt buraya gidiyor */}
-        <HighlightsSection aiHighlights={generatedHighlights} />
+          {/* AI tarafı direkt buraya gidiyor */}
+          <HighlightsSection aiHighlights={generatedHighlights} />
 
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <TopLanguages languages={data.topLanguages} />
-          <TopRepos repos={data.topRepos} />
-        </div>
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <TopLanguages languages={data.topLanguages} />
+            <TopRepos repos={data.topRepos} />
+          </div>
 
-        <div className="mt-12">
-          <CommitActivity monthlyData={data.monthlyCommits} />
+          <div className="mt-12">
+            <CommitActivity monthlyData={data.monthlyCommits} />
+          </div>
         </div>
 
         <Footer />
