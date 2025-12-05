@@ -52,14 +52,14 @@ export default function App() {
       fetchWrapped(username);
     }, [username, wrappedData, loading]);
 
-    if (!wrappedData || loading) return <LoadingScreen />;
+    if (!wrappedData || loading) return <LoadingScreen stage="fetching" />;
 
     return <Dashboard data={wrappedData} onBack={() => navigate("/")} />;
   }
 
   return (
     <>
-      {loading && <LoadingScreen />}
+      {loading && <LoadingScreen stage="fetching" />}
 
       <Routes>
         <Route

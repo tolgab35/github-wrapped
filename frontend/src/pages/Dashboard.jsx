@@ -45,7 +45,7 @@ export default function Dashboard({ data, onBack }) {
 
   // Show loading screen while highlights are being generated
   if (isLoadingHighlights) {
-    return <LoadingScreen />;
+    return <LoadingScreen stage="highlights" />;
   }
 
   return (
