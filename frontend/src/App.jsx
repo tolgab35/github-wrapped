@@ -1,4 +1,10 @@
-import { Routes, Route, useNavigate, useParams } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  useParams,
+  Navigate,
+} from "react-router-dom";
 import { useState, useEffect } from "react";
 
 import Home from "./pages/Home";
@@ -77,6 +83,8 @@ export default function App() {
         />
 
         <Route path="/wrapped/:username" element={<WrappedLoader />} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );
