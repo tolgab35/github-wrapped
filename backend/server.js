@@ -196,7 +196,7 @@ function getTopRepos(repos) {
     .slice(0, 5);
 }
 
-/* ---- MONTHLY COMMITS (MISSING IN YOUR CODE — THIS FIXES THE GRAPH) ---- */
+/* ---- MONTHLY COMMITS  ---- */
 
 function getMonthlyCommits(calendar) {
   const months = {
@@ -222,6 +222,39 @@ function getMonthlyCommits(calendar) {
 
   return months;
 }
+
+/* ---------------------------- RATE LIMIT API ---------------------------- */
+
+app.get("/api/rate-limit", async (req, res) => {
+  try {
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) return res.status(500).json({ error: "Missing GitHub token" });
+
+    const response = await fetch("https://api.github.com/rate_limit", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const data = await response.json();
+
+    res.json({
+      core: {
+        limit: data.resources.core.limit,
+        remaining: data.resources.core.remaining,
+        reset: data.resources.core.reset,
+        used: data.resources.core.used,
+      },
+      graphql: {
+        limit: data.resources.graphql.limit,
+        remaining: data.resources.graphql.remaining,
+        reset: data.resources.graphql.reset,
+        used: data.resources.graphql.used,
+      },
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Rate limit check failed" });
+  }
+});
 
 /* ---------------------------- MAIN WRAPPED API ---------------------------- */
 
@@ -267,6 +300,12 @@ app.get("/api/wrapped/:username", async (req, res) => {
       prevData.user.contributionsCollection
     );
 
+    // Check rate limit after API calls
+    const rateLimitResponse = await fetch("https://api.github.com/rate_limit", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const rateLimitData = await rateLimitResponse.json();
+
     const response = {
       login: data.user.login,
       name: data.user.name,
@@ -296,11 +335,26 @@ app.get("/api/wrapped/:username", async (req, res) => {
       monthlyCommits: getMonthlyCommits(calendar),
 
       growth: growth,
+
+      rateLimit: {
+        remaining: rateLimitData.resources.graphql.remaining,
+        limit: rateLimitData.resources.graphql.limit,
+        reset: rateLimitData.resources.graphql.reset,
+      },
     };
 
     res.json(response);
   } catch (e) {
     console.error(e);
+
+    // Check if it's a rate limit error
+    if (e.response?.errors?.[0]?.type === "RATE_LIMITED") {
+      return res.status(429).json({
+        error: "GitHub API rate limit exceeded",
+        message: "Please try again later",
+      });
+    }
+
     res.status(500).json({ error: "GitHub API error" });
   }
 });
@@ -341,7 +395,9 @@ ${JSON.stringify(stats)}
 `;
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash-lite-preview-09-2025",
+    });
 
     const result = await model.generateContent(prompt);
     const text = result.response.text().trim();

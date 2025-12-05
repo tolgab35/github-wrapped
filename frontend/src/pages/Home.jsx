@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { FiAtSign, FiGithub } from "react-icons/fi";
+import { FiAtSign, FiGithub, FiAlertCircle } from "react-icons/fi";
 
-export default function Home({ onGenerate }) {
+export default function Home({ onGenerate, error }) {
   const [username, setUsername] = useState("");
 
   const handleSubmit = (e) => {
@@ -65,6 +65,15 @@ export default function Home({ onGenerate }) {
         </p>
 
         <form onSubmit={handleSubmit}>
+          {error && (
+            <div className="mb-5 p-4 rounded-xl bg-red-500/10 border border-red-500/30 backdrop-blur-sm">
+              <div className="flex items-start gap-3">
+                <FiAlertCircle className="text-red-400 text-xl mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-red-300">{error}</p>
+              </div>
+            </div>
+          )}
+
           <div className="mb-5">
             <div className="relative">
               <FiAtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-lg" />

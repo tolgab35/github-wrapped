@@ -17,7 +17,18 @@ export default function App() {
 
     try {
       const res = await fetch(`http://localhost:3001/api/wrapped/${username}`);
-      if (!res.ok) throw new Error("User not found");
+
+      if (!res.ok) {
+        const errorData = await res.json();
+
+        if (res.status === 429) {
+          throw new Error(
+            "GitHub API rate limit exceeded. Please try again later."
+          );
+        }
+
+        throw new Error(errorData.error || "User not found");
+      }
 
       const data = await res.json();
       setWrappedData(data);

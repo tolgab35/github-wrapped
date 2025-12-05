@@ -10,6 +10,7 @@ import CommitActivity from "../components/dashboard/CommitActivity";
 import Footer from "../components/dashboard/Footer";
 import LoadingScreen from "../components/LoadingScreen";
 import ShareButton from "../components/dashboard/ShareButton";
+import RateLimitBanner from "../components/dashboard/RateLimitBanner";
 
 import generateHighlights from "../lib/generateHighlights";
 
@@ -100,6 +101,9 @@ export default function Dashboard({ data, onBack }) {
             </button>
           </div>
         </header>
+
+        {/* Rate Limit Banner */}
+        {data.rateLimit && <RateLimitBanner rateLimit={data.rateLimit} />}
 
         <div className="dashboard-container">
           <HeroSection data={data} onGoHome={generateAIHighlights} />
