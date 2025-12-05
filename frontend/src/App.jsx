@@ -27,7 +27,7 @@ export default function App() {
           );
         }
 
-        throw new Error(errorData.error || "User not found");
+        throw new Error(errorData.error || "This GitHub user does not exist");
       }
 
       const data = await res.json();

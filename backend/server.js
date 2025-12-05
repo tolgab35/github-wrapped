@@ -276,7 +276,8 @@ app.get("/api/wrapped/:username", async (req, res) => {
       to: YEAR_END,
     });
 
-    if (!data.user) return res.status(404).json({ error: "User not found" });
+    if (!data.user)
+      return res.status(404).json({ error: "This GitHub user does not exist" });
 
     // Fetch previous year data for growth comparison
     const prevData = await client.request(QUERY, {
@@ -353,6 +354,14 @@ app.get("/api/wrapped/:username", async (req, res) => {
         error: "GitHub API rate limit exceeded",
         message: "Please try again later",
       });
+    }
+
+    // Check if user not found
+    if (
+      e.response?.errors?.[0]?.type === "NOT_FOUND" ||
+      e.response?.errors?.[0]?.message?.includes("Could not resolve to a User")
+    ) {
+      return res.status(404).json({ error: "This GitHub user does not exist" });
     }
 
     res.status(500).json({ error: "GitHub API error" });
