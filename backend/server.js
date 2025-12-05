@@ -1,7 +1,9 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { GraphQLClient } from "graphql-request";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
 
@@ -9,29 +11,45 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Gemini client
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// GitHub API
 const GITHUB_API = "https://api.github.com/graphql";
 
-// 2025 range
-const YEAR_2025_START = "2024-12-01T00:00:00Z";
-const YEAR_2025_END = "2025-12-01T23:59:59Z";
+/* ------------------------ DATE RANGE: last 12 months ------------------------ */
+const now = new Date();
+const YEAR_END = now.toISOString();
 
-// 2024 range (for comparison)
-const YEAR_2024_START = "2023-12-01T00:00:00Z";
-const YEAR_2024_END = "2024-12-01T23:59:59Z";
+const YEAR_START = new Date();
+YEAR_START.setFullYear(YEAR_START.getFullYear() - 1);
+const YEAR_START_ISO = YEAR_START.toISOString();
 
-// GraphQL Query
+// Previous year range (for growth comparison)
+const PREV_YEAR_END = new Date(YEAR_START);
+PREV_YEAR_END.setDate(PREV_YEAR_END.getDate() - 1);
+const PREV_YEAR_END_ISO = PREV_YEAR_END.toISOString();
+
+const PREV_YEAR_START = new Date(PREV_YEAR_END);
+PREV_YEAR_START.setFullYear(PREV_YEAR_START.getFullYear() - 1);
+const PREV_YEAR_START_ISO = PREV_YEAR_START.toISOString();
+
+/* ----------------------------- GRAPHQL QUERY ----------------------------- */
+
 const QUERY = `
-  query YearSummary($login: String!, $from2025: DateTime!, $to2025: DateTime!, $from2024: DateTime!, $to2024: DateTime!) {
+  query YearSummary($login: String!, $from: DateTime!, $to: DateTime!) {
     user(login: $login) {
       login
       name
       avatarUrl
       createdAt
-      contributionsCollection2025: contributionsCollection(from: $from2025, to: $to2025) {
+
+      contributionsCollection(from: $from, to: $to) {
         totalCommitContributions
         totalIssueContributions
         totalPullRequestContributions
         totalPullRequestReviewContributions
+
         contributionCalendar {
           totalContributions
           weeks {
@@ -41,6 +59,7 @@ const QUERY = `
             }
           }
         }
+
         commitContributionsByRepository(maxRepositories: 100) {
           repository {
             name
@@ -56,59 +75,69 @@ const QUERY = `
           }
         }
       }
-
-      contributionsCollection2024: contributionsCollection(from: $from2024, to: $to2024) {
-        totalCommitContributions
-        totalIssueContributions
-        totalPullRequestContributions
-        totalPullRequestReviewContributions
-      }
-
-      repositories(first: 100, ownerAffiliations: OWNER, orderBy: {field: STARGAZERS, direction: DESC}) {
-        nodes {
-          name
-          url
-          stargazerCount
-          primaryLanguage {
-            name
-            color
-          }
-        }
-      }
     }
   }
 `;
 
-// Streak calculation
-function calculateStreak(calendar) {
-  let max = 0;
-  let current = 0;
+/* ---------------------------- UTIL FUNCTIONS ---------------------------- */
+function calculateGrowth(cur, prev) {
+  const sumPrev =
+    prev.totalCommitContributions +
+    prev.totalIssueContributions +
+    prev.totalPullRequestContributions;
 
-  for (const day of calendar) {
-    if (day.count > 0) {
-      current++;
-      max = Math.max(max, current);
-    } else {
-      current = 0;
-    }
+  const sumCur =
+    cur.totalCommitContributions +
+    cur.totalIssueContributions +
+    cur.totalPullRequestContributions;
+
+  if (sumPrev <= 0) return null;
+
+  return {
+    overallGrowth: Math.round(((sumCur - sumPrev) / sumPrev) * 100),
+
+    commitsGrowth: Math.round(
+      ((cur.totalCommitContributions - prev.totalCommitContributions) /
+        (prev.totalCommitContributions || 1)) *
+        100
+    ),
+
+    issuesGrowth: Math.round(
+      ((cur.totalIssueContributions - prev.totalIssueContributions) /
+        (prev.totalIssueContributions || 1)) *
+        100
+    ),
+
+    prsGrowth: Math.round(
+      ((cur.totalPullRequestContributions -
+        prev.totalPullRequestContributions) /
+        (prev.totalPullRequestContributions || 1)) *
+        100
+    ),
+  };
+}
+
+function calculateStreak(calendar) {
+  let max = 0,
+    cur = 0;
+  for (const d of calendar) {
+    if (d.count > 0) {
+      cur++;
+      max = Math.max(max, cur);
+    } else cur = 0;
   }
   return max;
 }
 
-// Find the best day
 function getBestDay(calendar) {
-  const map = [0, 0, 0, 0, 0, 0, 0];
-
-  for (const day of calendar) {
-    if (day.count > 0) {
-      map[new Date(day.date).getDay()] += day.count;
-    }
+  const map = Array(7).fill(0);
+  for (const d of calendar) {
+    if (d.count > 0) map[new Date(d.date).getDay()] += d.count;
   }
-
   const max = Math.max(...map);
   if (max === 0) return "Not enough data";
 
-  const names = [
+  const days = [
     "Sunday",
     "Monday",
     "Tuesday",
@@ -117,30 +146,34 @@ function getBestDay(calendar) {
     "Friday",
     "Saturday",
   ];
-  return names[map.indexOf(max)];
+  return days[map.indexOf(max)];
 }
 
-// Calculate top languages
 function getTopLanguages(repos) {
   const langMap = {};
 
   repos.forEach((entry) => {
     if (!entry.repository.primaryLanguage) return;
+
     const lang = entry.repository.primaryLanguage.name;
+    const color = entry.repository.primaryLanguage.color || "#666666";
 
     if (!langMap[lang]) {
-      langMap[lang] = {
-        count: 0,
-        color: entry.repository.primaryLanguage.color,
-      };
+      langMap[lang] = { count: 0, color: color };
     }
 
     langMap[lang].count += entry.contributions.totalCount;
   });
 
-  const total = Object.values(langMap).reduce((sum, x) => sum + x.count, 0);
+  // Calculate total contributions
+  const total = Object.values(langMap).reduce(
+    (sum, lang) => sum + lang.count,
+    0
+  );
+
   if (total === 0) return [];
 
+  // Calculate percentages
   return Object.entries(langMap)
     .map(([name, data]) => ({
       name,
@@ -151,57 +184,22 @@ function getTopLanguages(repos) {
     .slice(0, 3);
 }
 
-// Top repositories
 function getTopRepos(repos) {
   return repos
-    .filter((r) => r.contributions.totalCount > 0)
-    .map((r) => ({
-      name: r.repository.name,
-      url: r.repository.url,
-      contributions: r.contributions.totalCount,
-      stargazers: r.repository.stargazerCount,
+    .filter((x) => x.contributions.totalCount > 0)
+    .map((x) => ({
+      name: x.repository.name,
+      url: x.repository.url,
+      contributions: x.contributions.totalCount,
     }))
     .sort((a, b) => b.contributions - a.contributions)
     .slice(0, 5);
 }
 
-// Yearly comparison
-function calculateGrowth(c2025, c2024) {
-  const sum24 =
-    c2024.totalCommitContributions +
-    c2024.totalIssueContributions +
-    c2024.totalPullRequestContributions;
-  const sum25 =
-    c2025.totalCommitContributions +
-    c2025.totalIssueContributions +
-    c2025.totalPullRequestContributions;
+/* ---- MONTHLY COMMITS (MISSING IN YOUR CODE — THIS FIXES THE GRAPH) ---- */
 
-  if (sum24 < 10) return null;
-
-  return {
-    overallGrowth: Math.round(((sum25 - sum24) / sum24) * 100),
-    commitsGrowth: Math.round(
-      ((c2025.totalCommitContributions - c2024.totalCommitContributions) /
-        (c2024.totalCommitContributions || 1)) *
-        100
-    ),
-    issuesGrowth: Math.round(
-      ((c2025.totalIssueContributions - c2024.totalIssueContributions) /
-        (c2024.totalIssueContributions || 1)) *
-        100
-    ),
-    prsGrowth: Math.round(
-      ((c2025.totalPullRequestContributions -
-        c2024.totalPullRequestContributions) /
-        (c2024.totalPullRequestContributions || 1)) *
-        100
-    ),
-  };
-}
-
-// Commit counts for each month
 function getMonthlyCommits(calendar) {
-  const monthly = {
+  const months = {
     Jan: 0,
     Feb: 0,
     Mar: 0,
@@ -216,40 +214,46 @@ function getMonthlyCommits(calendar) {
     Dec: 0,
   };
 
-  for (const day of calendar) {
-    const monthIndex = new Date(day.date).getMonth(); // 0–11
-    const monthName = Object.keys(monthly)[monthIndex];
-    monthly[monthName] += day.count;
+  for (const d of calendar) {
+    const m = new Date(d.date).getMonth();
+    const key = Object.keys(months)[m];
+    months[key] += d.count;
   }
 
-  return monthly;
+  return months;
 }
 
-// Main endpoint
+/* ---------------------------- MAIN WRAPPED API ---------------------------- */
+
 app.get("/api/wrapped/:username", async (req, res) => {
   try {
     const username = req.params.username;
-
     const token = process.env.GITHUB_TOKEN;
+
     if (!token) return res.status(500).json({ error: "Missing GitHub token" });
 
     const client = new GraphQLClient(GITHUB_API, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
+    // Fetch current year data
     const data = await client.request(QUERY, {
       login: username,
-      from2025: YEAR_2025_START,
-      to2025: YEAR_2025_END,
-      from2024: YEAR_2024_START,
-      to2024: YEAR_2024_END,
+      from: YEAR_START_ISO,
+      to: YEAR_END,
     });
 
     if (!data.user) return res.status(404).json({ error: "User not found" });
 
-    // Calendar flatten
+    // Fetch previous year data for growth comparison
+    const prevData = await client.request(QUERY, {
+      login: username,
+      from: PREV_YEAR_START_ISO,
+      to: PREV_YEAR_END_ISO,
+    });
+
     const calendar =
-      data.user.contributionsCollection2025.contributionCalendar.weeks.flatMap(
+      data.user.contributionsCollection.contributionCalendar.weeks.flatMap(
         (w) =>
           w.contributionDays.map((d) => ({
             date: d.date,
@@ -257,44 +261,103 @@ app.get("/api/wrapped/:username", async (req, res) => {
           }))
       );
 
+    // Calculate growth using actual previous year data
+    const growth = calculateGrowth(
+      data.user.contributionsCollection,
+      prevData.user.contributionsCollection
+    );
+
     const response = {
       login: data.user.login,
       name: data.user.name,
       avatarUrl: data.user.avatarUrl,
+
       totalContributions:
-        data.user.contributionsCollection2025.contributionCalendar
+        data.user.contributionsCollection.contributionCalendar
           .totalContributions,
-      totalCommits:
-        data.user.contributionsCollection2025.totalCommitContributions,
-      totalIssues:
-        data.user.contributionsCollection2025.totalIssueContributions,
-      totalPRs:
-        data.user.contributionsCollection2025.totalPullRequestContributions,
-      totalReviews:
-        data.user.contributionsCollection2025
-          .totalPullRequestReviewContributions,
+
+      totalCommits: data.user.contributionsCollection.totalCommitContributions,
+
+      totalIssues: data.user.contributionsCollection.totalIssueContributions,
+
+      totalPRs: data.user.contributionsCollection.totalPullRequestContributions,
+
       topLanguages: getTopLanguages(
-        data.user.contributionsCollection2025.commitContributionsByRepository
+        data.user.contributionsCollection.commitContributionsByRepository
       ),
+
       topRepos: getTopRepos(
-        data.user.contributionsCollection2025.commitContributionsByRepository
+        data.user.contributionsCollection.commitContributionsByRepository
       ),
+
       streak: calculateStreak(calendar),
       bestDay: getBestDay(calendar),
-      githubAnniversary:
-        new Date().getFullYear() - new Date(data.user.createdAt).getFullYear(),
-      growth: calculateGrowth(
-        data.user.contributionsCollection2025,
-        data.user.contributionsCollection2024
-      ),
+
       monthlyCommits: getMonthlyCommits(calendar),
+
+      growth: growth,
     };
 
     res.json(response);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "GitHub API Error", detail: err.message });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "GitHub API error" });
   }
 });
 
-app.listen(3001, () => console.log("Backend running on port 3001"));
+/* ------------------------- HIGHLIGHTS API ------------------------- */
+
+function fallbackHighlights(s) {
+  return [
+    {
+      emoji: "🔥",
+      title: "Streak Runner",
+      description: `You kept a ${s.streak}-day streak.`,
+    },
+    {
+      emoji: "📌",
+      title: "Best Day",
+      description: `Most active on ${s.bestDay}.`,
+    },
+    {
+      emoji: "⭐",
+      title: "Top Repo",
+      description: `Your best repo: ${s.topRepos?.[0]?.name || "N/A"}.`,
+    },
+  ];
+}
+
+app.post("/api/highlights", async (req, res) => {
+  const stats = req.body;
+
+  const prompt = `
+Generate exactly 3 fun GitHub Wrapped highlight cards.
+Each output has: emoji, title (max 3 words), description (1 sentence).
+
+Return ONLY pure JSON array.
+
+Stats:
+${JSON.stringify(stats)}
+`;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text().trim();
+
+    const start = text.indexOf("[");
+    const end = text.lastIndexOf("]") + 1;
+
+    if (start === -1 || end <= 0) return res.json(fallbackHighlights(stats));
+
+    return res.json(JSON.parse(text.slice(start, end)));
+  } catch (e) {
+    console.error(e);
+    return res.json(fallbackHighlights(stats));
+  }
+});
+
+/* --------------------------- START SERVER --------------------------- */
+
+app.listen(3001, () => console.log("Backend running on http://localhost:3001"));

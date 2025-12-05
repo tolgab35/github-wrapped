@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Flame, Code2, FolderGit2, Calendar, Zap } from "lucide-react";
 
-export default function HeroSection({ data, onBack }) {
+export default function HeroSection({ data, onGoHome }) {
   const {
     login,
     name,
@@ -70,7 +70,7 @@ export default function HeroSection({ data, onBack }) {
         </motion.p>
 
         <button
-          onClick={onBack}
+          onClick={onGoHome}
           className="
             px-5 py-2 rounded-full font-medium
             bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
