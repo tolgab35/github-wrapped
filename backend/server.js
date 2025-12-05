@@ -381,8 +381,41 @@ function fallbackHighlights(s) {
   ];
 }
 
+// Cache and quota tracking
+const highlightsCache = new Map(); // username: { highlights, timestamp }
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+let apiQuotaExhausted = false;
+let quotaResetTime = null;
+
 app.post("/api/highlights", async (req, res) => {
   const stats = req.body;
+  const username = stats.login || stats.username || "anonymous";
+
+  // 1. Check cache
+  if (highlightsCache.has(username)) {
+    const cached = highlightsCache.get(username);
+    const now = Date.now();
+
+    // If cache is still valid
+    if (now - cached.timestamp < CACHE_DURATION) {
+      console.log(`✅ Returning from cache: ${username}`);
+      return res.json(cached.highlights);
+    } else {
+      // Clear expired cache
+      highlightsCache.delete(username);
+    }
+  }
+
+  // 2. Check global quota
+  if (apiQuotaExhausted && quotaResetTime && Date.now() < quotaResetTime) {
+    console.log(
+      `⚠️  API quota exhausted, using fallback. Reset: ${new Date(
+        quotaResetTime
+      ).toLocaleString("en-US")}`
+    );
+    return res.json(fallbackHighlights(stats));
+  }
 
   const prompt = `
 Generate exactly 3 fun GitHub Wrapped highlight cards.
@@ -405,11 +438,56 @@ ${JSON.stringify(stats)}
     const start = text.indexOf("[");
     const end = text.lastIndexOf("]") + 1;
 
-    if (start === -1 || end <= 0) return res.json(fallbackHighlights(stats));
+    if (start === -1 || end <= 0) {
+      return res.json(fallbackHighlights(stats));
+    }
 
-    return res.json(JSON.parse(text.slice(start, end)));
+    const highlights = JSON.parse(text.slice(start, end));
+
+    // Save to cache
+    highlightsCache.set(username, {
+      highlights,
+      timestamp: Date.now(),
+    });
+
+    console.log(`✨ AI highlights generated: ${username}`);
+
+    // Reset quota flag if working properly
+    if (apiQuotaExhausted) {
+      apiQuotaExhausted = false;
+      quotaResetTime = null;
+      console.log("✅ API quota restored");
+    }
+
+    return res.json(highlights);
   } catch (e) {
-    console.error(e);
+    console.error("Gemini API error:", e.message);
+
+    // 429 error (quota exceeded)
+    if (e.status === 429) {
+      apiQuotaExhausted = true;
+
+      // Use retry delay from API response
+      const retryInfo = e.errorDetails?.find(
+        (detail) =>
+          detail["@type"] === "type.googleapis.com/google.rpc.RetryInfo"
+      );
+
+      if (retryInfo?.retryDelay) {
+        const seconds = parseInt(retryInfo.retryDelay);
+        quotaResetTime = Date.now() + seconds * 1000;
+      } else {
+        // Default: reset after 1 hour
+        quotaResetTime = Date.now() + 60 * 60 * 1000;
+      }
+
+      console.log(
+        `❌ API quota exceeded! Reset time: ${new Date(
+          quotaResetTime
+        ).toLocaleString("en-US")}`
+      );
+    }
+
     return res.json(fallbackHighlights(stats));
   }
 });
