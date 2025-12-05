@@ -13,21 +13,28 @@ export default function TopLanguages({ languages }) {
       <h3 className="text-lg font-semibold text-white mb-1">Top Languages</h3>
       <h2 className="text-2xl font-bold mb-4">{languages[0].name}</h2>
 
-      {languages.map((lang) => (
-        <div key={lang.name} className="mb-4">
-          <div className="flex justify-between text-sm text-white/70 mb-1">
-            <span>{lang.name}</span>
-            <span>{Math.round(lang.percent)}%</span>
-          </div>
+      {languages.map((lang) => {
+        const faded = lang.color + "55";
 
-          <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-purple-400 to-blue-500"
-              style={{ width: `${lang.percent}%` }}
-            />
+        return (
+          <div key={lang.name} className="mb-4">
+            <div className="flex justify-between text-sm text-white/70 mb-1">
+              <span>{lang.name}</span>
+              <span>{Math.round(lang.percent)}%</span>
+            </div>
+
+            <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${lang.percent}%`,
+                  background: `linear-gradient(to right, ${lang.color}, ${faded})`,
+                }}
+              />
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
