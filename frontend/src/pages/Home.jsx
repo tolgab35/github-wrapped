@@ -28,7 +28,7 @@ export default function Home({ onGenerate }) {
         className="
           relative z-10 w-[90%] max-w-md 
           bg-white/5 backdrop-blur-xl 
-          rounded-3xl p-10 
+          rounded-2xl p-10 
           border border-white/10 
           shadow-[0_0_60px_rgba(80,80,255,0.3)]
         "
@@ -88,14 +88,34 @@ export default function Home({ onGenerate }) {
           <button
             type="submit"
             className="
-              w-full py-3 rounded-full font-semibold 
-              bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500
-              text-white shadow-lg
-              hover:brightness-110 hover:scale-[1.02]
-              transition-all
+              group relative w-full px-6 py-3 rounded-xl font-semibold text-sm
+              bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-indigo-600/20
+              hover:from-purple-600/30 hover:via-pink-600/30 hover:to-indigo-600/30
+              border border-purple-500/30 hover:border-purple-400/50
+              text-white shadow-[0_0_20px_rgba(168,85,247,0.15)] 
+              hover:shadow-[0_0_30px_rgba(168,85,247,0.3)]
+              hover:scale-[1.02] active:scale-[0.98]
+              transition-all duration-300 backdrop-blur-sm
+              overflow-hidden
             "
           >
-            Generate Your Wrapped
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              <svg
+                className="w-4 h-4 transition-transform group-hover:scale-110 duration-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              Generate Your Wrapped
+            </span>
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-pink-600/20 to-purple-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </button>
         </form>
       </motion.div>

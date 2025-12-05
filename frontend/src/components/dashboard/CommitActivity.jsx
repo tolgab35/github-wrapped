@@ -103,7 +103,7 @@ export default function CommitActivity({ monthlyData = {} }) {
 
       {/* CHART AREA */}
       <div className="h-48 relative">
-        <div className="absolute inset-0 blur-3xl bg-purple-700/20 rounded-3xl" />
+        <div className="absolute inset-0 blur-3xl bg-purple-700/20 rounded-2xl" />
         <Line data={data} options={options} />
       </div>
     </div>
