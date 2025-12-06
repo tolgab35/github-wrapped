@@ -36,7 +36,7 @@ export default function LoadingScreen({ stage = "default" }) {
     const progressInterval = setInterval(() => {
       setProgress((prev) => {
         if (prev >= 95) return prev;
-        return prev + Math.random() * 10;
+        return Math.min(prev + Math.random() * 10, 95);
       });
     }, 300);
 
@@ -140,7 +140,7 @@ export default function LoadingScreen({ stage = "default" }) {
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 1.5, repeat: Infinity }}
           >
-            {Math.floor(progress)}%
+            {Math.floor(Math.min(progress, 100))}%
           </motion.p>
         </motion.div>
       )}
