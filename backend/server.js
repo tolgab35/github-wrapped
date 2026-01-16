@@ -8,7 +8,13 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin:
+      process.env.FRONTEND_URL || "https://github-wrapped-sepia.vercel.app",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Gemini client
@@ -251,7 +257,7 @@ app.get("/api/rate-limit", async (req, res) => {
       },
     });
   } catch (e) {
-    console.error(e);
+    console.error("Rate limit check error:", e.message || "Unknown error");
     res.status(500).json({ error: "Rate limit check failed" });
   }
 });
@@ -261,6 +267,12 @@ app.get("/api/rate-limit", async (req, res) => {
 app.get("/api/wrapped/:username", async (req, res) => {
   try {
     const username = req.params.username;
+
+    // Username validation (GitHub username format)
+    if (!/^[a-zA-Z0-9](?:[a-zA-Z0-9]|-(?=[a-zA-Z0-9])){0,38}$/.test(username)) {
+      return res.status(400).json({ error: "Invalid username format" });
+    }
+
     const token = process.env.GITHUB_TOKEN;
 
     if (!token) return res.status(500).json({ error: "Missing GitHub token" });
@@ -346,7 +358,11 @@ app.get("/api/wrapped/:username", async (req, res) => {
 
     res.json(response);
   } catch (e) {
-    console.error(e);
+    console.error("GitHub API error:", {
+      message: e.message,
+      type: e.response?.errors?.[0]?.type,
+      status: e.status,
+    });
 
     // Check if it's a rate limit error
     if (e.response?.errors?.[0]?.type === "RATE_LIMITED") {
@@ -470,7 +486,10 @@ ${JSON.stringify(stats)}
 
     return res.json(highlights);
   } catch (e) {
-    console.error("Gemini API error:", e.message);
+    console.error("Gemini API error:", {
+      message: e.message,
+      status: e.status,
+    });
 
     // 429 error (quota exceeded)
     if (e.status === 429) {
