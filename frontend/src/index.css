@@ -1,3 +1,123 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Design tokens ───────────────────────────────────────────── */
+:root {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --accent: #3fb950;
+  --accent-emphasis: #2ea043;
+  --accent-fg: #ffffff;
+  --c1: #0e4429;
+  --c2: #006d32;
+  --c3: #26a641;
+  --c4: #39d353;
+}
+
+/* ── Dark theme (default) ────────────────────────────────────── */
+[data-theme="dark"], :root {
+  --canvas: #0d1117;
+  --canvas-inset: #010409;
+  --surface: #161b22;
+  --surface-2: #1c2128;
+  --surface-hover: #1f242c;
+  --border: #30363d;
+  --border-muted: #21262d;
+  --fg: #e6edf3;
+  --fg-muted: #7d8590;
+  --fg-subtle: #6e7681;
+  --fg-faint: #484f58;
+  --cell-empty: #161b22;
+  --cell-border: rgba(255, 255, 255, 0.045);
+  --shadow: 0 1px 0 rgba(1,4,9,0.6), 0 8px 24px rgba(1,4,9,0.4);
+  --grid-line: rgba(255, 255, 255, 0.035);
+}
+
+/* ── Light theme ─────────────────────────────────────────────── */
+[data-theme="light"] {
+  --canvas: #ffffff;
+  --canvas-inset: #f6f8fa;
+  --surface: #ffffff;
+  --surface-2: #f6f8fa;
+  --surface-hover: #f3f4f6;
+  --border: #d1d9e0;
+  --border-muted: #d8dee4;
+  --fg: #1f2328;
+  --fg-muted: #59636e;
+  --fg-subtle: #818b98;
+  --fg-faint: #aeb6c0;
+  --cell-empty: #ebedf0;
+  --cell-border: rgba(27, 31, 36, 0.06);
+  --shadow: 0 1px 0 rgba(31,35,40,0.04), 0 6px 18px rgba(31,35,40,0.06);
+  --grid-line: rgba(31, 35, 40, 0.045);
+}
+
+/* ── Accent palettes ─────────────────────────────────────────── */
+[data-accent="green"]  { --accent:#3fb950; --accent-emphasis:#2ea043; --c1:#0e4429; --c2:#006d32; --c3:#26a641; --c4:#39d353; }
+[data-accent="blue"]   { --accent:#2f81f7; --accent-emphasis:#1f6feb; --c1:#0a3069; --c2:#0969da; --c3:#2f81f7; --c4:#54aeff; }
+[data-accent="purple"] { --accent:#a371f7; --accent-emphasis:#8957e5; --c1:#3c1e70; --c2:#6e40c9; --c3:#a371f7; --c4:#c297ff; }
+[data-accent="orange"] { --accent:#f0883e; --accent-emphasis:#db6d28; --c1:#762d0a; --c2:#bc4c00; --c3:#f0883e; --c4:#ffb77c; }
+
+[data-theme="light"][data-accent="green"]  { --c1:#9be9a8; --c2:#40c463; --c3:#30a14e; --c4:#216e39; }
+[data-theme="light"][data-accent="blue"]   { --c1:#b6d4fe; --c2:#58a6ff; --c3:#2f81f7; --c4:#0969da; }
+[data-theme="light"][data-accent="purple"] { --c1:#e2d4fb; --c2:#c297ff; --c3:#a371f7; --c4:#8250df; }
+[data-theme="light"][data-accent="orange"] { --c1:#ffd8b5; --c2:#ffb77c; --c3:#f0883e; --c4:#bc4c00; }
+
+/* ── Base ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--canvas);
+  color: var(--fg);
+  font-family: var(--font-display);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body { transition: background 0.35s ease, color 0.35s ease; }
+
+#root { min-height: 100vh; }
+
+::selection { background: color-mix(in oklab, var(--accent) 35%, transparent); }
+
+/* ── Typography utilities ────────────────────────────────────── */
+.tnum { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.mono { font-family: var(--font-mono); }
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  font-weight: 500;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; border: 2px solid var(--canvas); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Focus ───────────────────────────────────────────────────── */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── Entrance animations ─────────────────────────────────────── */
+@keyframes wr-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes wr-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wr-pop  { 0% { opacity:0; transform:scale(0.6); } 60% { opacity:1; transform:scale(1.06); } 100% { transform:scale(1); } }
+@keyframes wr-spin { to { transform: rotate(360deg); } }
+@keyframes wr-cell-in { from { opacity:0; transform:scale(0.55); } to { opacity:1; transform:scale(1); } }
+@keyframes wr-draw { to { stroke-dashoffset: 0; } }
+
+.rise { animation: wr-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.fade { animation: wr-fade 0.7s ease both; }
