@@ -1,133 +1,238 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { FiAtSign, FiGithub, FiAlertCircle } from "react-icons/fi";
 
-export default function Home({ onGenerate, error }) {
-  const [username, setUsername] = useState("");
+const EXAMPLES = ["torvalds", "gaearon", "sindresorhus"];
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const clean = username.trim();
-    if (clean) {
-      onGenerate(clean);
+// Deterministic decorative backdrop grid
+function BackdropGrid() {
+  const cols = 38, rows = 9, cell = 13, gap = 4, step = 17;
+  const cells = [];
+  let h = 99173;
+  const next = () => { h = (h * 1103515245 + 12345) & 0x7fffffff; return h / 0x7fffffff; };
+  const ramp = ["var(--cell-empty)", "var(--c1)", "var(--c2)", "var(--c3)", "var(--c4)"];
+
+  for (let x = 0; x < cols; x++) {
+    for (let y = 0; y < rows; y++) {
+      const r = next();
+      const lvl = r < 0.55 ? 0 : r < 0.72 ? 1 : r < 0.85 ? 2 : r < 0.94 ? 3 : 4;
+      cells.push({ x, y, fill: ramp[lvl] });
     }
-  };
+  }
 
   return (
-    <div className="w-full h-screen flex items-center justify-center bg-[#0d0b1f] relative overflow-hidden">
-      {/* Background blur / glow */}
-      <div className="absolute inset-0">
-        <div className="absolute w-[500px] h-[500px] bg-purple-700/30 blur-[180px] rounded-full left-[-150px] top-[-150px]" />
-        <div className="absolute w-[500px] h-[500px] bg-blue-600/30 blur-[200px] rounded-full right-[-150px] bottom-[-150px]" />
-      </div>
+    <svg
+      width={cols * step}
+      height={rows * step}
+      aria-hidden="true"
+      style={{
+        position: "absolute", right: -40, bottom: -20,
+        opacity: 0.5,
+        maskImage: "radial-gradient(120% 120% at 100% 100%, #000 30%, transparent 72%)",
+        WebkitMaskImage: "radial-gradient(120% 120% at 100% 100%, #000 30%, transparent 72%)",
+        pointerEvents: "none",
+      }}
+    >
+      {cells.map(({ x, y, fill }) => (
+        <rect
+          key={`${x}-${y}`}
+          x={x * step} y={y * step}
+          width={cell} height={cell}
+          rx={2.5}
+          fill={fill}
+        />
+      ))}
+    </svg>
+  );
+}
 
-      <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="
-          relative z-10 w-[90%] max-w-md 
-          bg-white/5 backdrop-blur-xl 
-          rounded-2xl p-10 
-          border border-white/10 
-          shadow-[0_0_60px_rgba(80,80,255,0.3)]
-        "
-      >
-        {/* ICON */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          whileHover={{ scale: 1.08 }}
-          className="flex justify-center mb-6"
-        >
-          <div
-            className="
-              w-14 h-14 
-              bg-purple-500/20 
-              rounded-full 
-              flex items-center justify-center
-              shadow-[0_0_25px_rgba(155,90,255,0.45)]
-            "
-          >
-            <FiGithub className="text-purple-300 text-3xl" />
+function ThemeToggle({ theme, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      style={{
+        width: 34, height: 34, borderRadius: 8, cursor: "pointer",
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        border: "1px solid var(--border)", background: "var(--surface)",
+        color: "var(--fg-muted)", transition: "color .15s, border-color .15s",
+        flexShrink: 0,
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.color = "var(--fg)"; e.currentTarget.style.borderColor = "var(--accent)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.color = "var(--fg-muted)"; e.currentTarget.style.borderColor = "var(--border)"; }}
+    >
+      {theme === "dark" ? (
+        <svg viewBox="0 0 16 16" width={15} height={15} fill="currentColor">
+          <path d="M8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8Zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM8 0a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V.75A.75.75 0 0 1 8 0Zm0 13a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 8 13ZM2.343 2.343a.75.75 0 0 1 1.061 0l1.06 1.061a.751.751 0 0 1-1.042 1.06l-1.06-1.06a.75.75 0 0 1 0-1.06Zm9.193 9.193a.75.75 0 0 1 1.06 0l1.061 1.06a.75.75 0 0 1-1.06 1.061l-1.061-1.06a.75.75 0 0 1 0-1.061ZM16 8a.75.75 0 0 1-.75.75h-1.5a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 16 8ZM3 8a.75.75 0 0 1-.75.75H.75a.75.75 0 0 1 0-1.5h1.5A.75.75 0 0 1 3 8Zm10.657-5.657a.75.75 0 0 1 0 1.061l-1.061 1.06a.749.749 0 0 1-1.275-.326.749.749 0 0 1 .215-.734l1.06-1.061a.75.75 0 0 1 1.061 0ZM4.404 11.596a.75.75 0 0 1 0 1.06l-1.06 1.061a.75.75 0 1 1-1.061-1.06l1.06-1.061a.75.75 0 0 1 1.061 0Z" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 16 16" width={15} height={15} fill="currentColor">
+          <path d="M9.598 1.591a.749.749 0 0 1 .785-.175 7.001 7.001 0 1 1-8.967 8.967.75.75 0 0 1 .961-.96 5.5 5.5 0 0 0 7.046-7.046.75.75 0 0 1 .175-.786Z" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+export default function Home({ onGenerate, error, theme, onToggleTheme }) {
+  const [value, setValue] = useState("");
+  const [touched, setTouched] = useState(false);
+
+  const submit = (e) => {
+    e.preventDefault();
+    const clean = value.trim().replace(/^@/, "");
+    if (clean) onGenerate(clean);
+    else setTouched(true);
+  };
+
+  const inputBorder = touched && !value.trim() ? "var(--accent)" : "var(--border)";
+
+  return (
+    <div style={{
+      minHeight: "100vh", display: "flex", flexDirection: "column",
+      background: "var(--canvas)", color: "var(--fg)",
+      position: "relative", overflow: "hidden",
+    }}>
+      {/* Top bar */}
+      <header style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "20px 24px", borderBottom: "1px solid var(--border-muted)",
+      }}>
+        <svg viewBox="0 0 16 16" width={22} height={22} fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+        </svg>
+        <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: "-0.01em" }}>GitHub Wrapped</span>
+        <span className="mono" style={{ marginLeft: "auto", marginRight: 12, fontSize: 12, color: "var(--fg-muted)" }}>
+          EST. 2008 · GIT GUD
+        </span>
+        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+      </header>
+
+      {/* Center */}
+      <main style={{
+        flex: 1, display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center",
+        padding: "32px 24px", textAlign: "center",
+        position: "relative", zIndex: 2,
+      }}>
+        <BackdropGrid />
+
+        <div className="fade" style={{ position: "relative", zIndex: 2, width: "100%", maxWidth: 460 }}>
+          {/* Kicker badge */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 22,
+            padding: "5px 12px", borderRadius: 999,
+            border: "1px solid var(--border)", background: "var(--surface)", color: "var(--fg-muted)",
+          }}>
+            <span style={{
+              width: 7, height: 7, borderRadius: "50%", background: "var(--accent)",
+              boxShadow: "0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent)",
+            }} />
+            <span className="mono" style={{ fontSize: 12 }}>{new Date().getFullYear()} year in review</span>
           </div>
-        </motion.div>
 
-        <h1 className="text-3xl font-bold text-center text-white mb-3">
-          Your Year in Code
-        </h1>
+          <h1 style={{
+            fontSize: "clamp(34px, 6vw, 52px)", lineHeight: 1.04,
+            letterSpacing: "-0.03em", fontWeight: 700, margin: "0 0 16px",
+          }}>
+            Your year in code,
+            <br />
+            <span style={{ color: "var(--accent)" }}>one grid at a time.</span>
+          </h1>
 
-        <p className="text-center text-white/60 mb-8">
-          Enter your GitHub username to generate your
-          <br />
-          2025 Wrapped.
-        </p>
+          <p style={{
+            color: "var(--fg-muted)", fontSize: 16, lineHeight: 1.55,
+            margin: "0 auto 32px", maxWidth: 380,
+          }}>
+            Every commit, pull request, and 2 a.m. hotfix — recapped.
+            Drop a username to unwrap the year.
+          </p>
 
-        <form onSubmit={handleSubmit}>
+          {/* Error */}
           {error && (
-            <div className="mb-5 p-4 rounded-xl bg-red-500/10 border border-red-500/30 backdrop-blur-sm">
-              <div className="flex items-start gap-3">
-                <FiAlertCircle className="text-red-400 text-xl mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-red-300">{error}</p>
-              </div>
+            <div style={{
+              marginBottom: 16, padding: "12px 16px", borderRadius: 10,
+              background: "color-mix(in oklab, #f85149 12%, transparent)",
+              border: "1px solid color-mix(in oklab, #f85149 35%, transparent)",
+              color: "#f85149", fontSize: 13.5, textAlign: "left",
+            }}>
+              {error}
             </div>
           )}
 
-          <div className="mb-5">
-            <div className="relative">
-              <FiAtSign className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 text-lg" />
-
+          {/* Form */}
+          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{
+              display: "flex", alignItems: "center",
+              background: "var(--surface)", border: `1px solid ${inputBorder}`,
+              borderRadius: 10, overflow: "hidden", height: 52,
+              transition: "border-color .2s",
+            }}>
+              <span className="mono" style={{ padding: "0 4px 0 16px", color: "var(--fg-subtle)", fontSize: 16, userSelect: "none" }}>
+                @
+              </span>
               <input
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="
-                  w-full bg-white/10 text-white 
-                  pl-12 pr-4 py-3 rounded-full
-                  placeholder-white/40
-                  border border-white/10
-                  focus:outline-none focus:ring-2 focus:ring-purple-500/40
-                "
-                placeholder="GitHub Username"
-                type="text"
+                value={value}
+                autoFocus
+                spellCheck={false}
+                autoCapitalize="none"
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="username"
+                aria-label="GitHub username"
+                style={{
+                  flex: 1, height: "100%", border: "none", outline: "none",
+                  background: "transparent", color: "var(--fg)",
+                  fontFamily: "var(--font-mono)", fontSize: 16, padding: "0 12px 0 0",
+                }}
               />
             </div>
-          </div>
 
-          <button
-            type="submit"
-            className="
-              group relative w-full px-6 py-3 rounded-xl font-semibold text-sm
-              bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-indigo-600/20
-              hover:from-purple-600/30 hover:via-pink-600/30 hover:to-indigo-600/30
-              border border-purple-500/30 hover:border-purple-400/50
-              text-white shadow-[0_0_20px_rgba(168,85,247,0.15)] 
-              hover:shadow-[0_0_30px_rgba(168,85,247,0.3)]
-              hover:scale-[1.02] active:scale-[0.98]
-              transition-all duration-300 backdrop-blur-sm
-              overflow-hidden
-            "
-          >
-            <span className="relative z-10 flex items-center justify-center gap-2">
-              <svg
-                className="w-4 h-4 transition-transform group-hover:scale-110 duration-300"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
+            <button
+              type="submit"
+              style={{
+                height: 50, borderRadius: 10,
+                border: "1px solid var(--accent-emphasis)",
+                background: "var(--accent)", color: "var(--accent-fg)",
+                fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 600,
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                transition: "filter .15s, transform .05s",
+              }}
+              onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.99)")}
+              onMouseUp={(e) => (e.currentTarget.style.transform = "none")}
+              onMouseEnter={(e) => (e.currentTarget.style.filter = "brightness(1.06)")}
+              onMouseLeave={(e) => (e.currentTarget.style.filter = "none")}
+            >
+              <svg viewBox="0 0 16 16" width={15} height={15} fill="currentColor">
+                <path d="M9.504.43a1.516 1.516 0 0 1 2.437 1.713L10.415 5.5h2.123c1.57 0 2.346 1.909 1.22 3.004l-7.34 7.142a1.249 1.249 0 0 1-.871.354h-.302a1.25 1.25 0 0 1-1.157-1.723L5.633 10.5H3.462c-1.57 0-2.346-1.909-1.22-3.004L9.503.429Z" />
               </svg>
-              Generate Your Wrapped
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-pink-600/20 to-purple-600/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </button>
-        </form>
-      </motion.div>
+              Unwrap my year
+            </button>
+          </form>
+
+          {/* Example usernames */}
+          <div className="mono" style={{
+            marginTop: 18, fontSize: 11.5, color: "var(--fg-subtle)",
+            display: "flex", gap: 6, justifyContent: "center", alignItems: "center", flexWrap: "wrap",
+          }}>
+            <span>Try</span>
+            {EXAMPLES.map((u) => (
+              <button
+                key={u}
+                type="button"
+                onClick={() => onGenerate(u)}
+                style={{
+                  background: "var(--surface)", border: "1px solid var(--border-muted)",
+                  color: "var(--fg-muted)", borderRadius: 6, padding: "3px 8px",
+                  fontFamily: "var(--font-mono)", fontSize: 11.5, cursor: "pointer",
+                  transition: "border-color .15s, color .15s",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--fg)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-muted)"; e.currentTarget.style.color = "var(--fg-muted)"; }}
+              >
+                @{u}
+              </button>
+            ))}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

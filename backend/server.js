@@ -49,6 +49,7 @@ const QUERY = `
       name
       avatarUrl
       createdAt
+      followers { totalCount }
 
       contributionsCollection(from: $from, to: $to) {
         totalCommitContributions
@@ -124,13 +125,10 @@ function calculateGrowth(cur, prev) {
 }
 
 function calculateStreak(calendar) {
-  let max = 0,
-    cur = 0;
+  let max = 0, cur = 0;
   for (const d of calendar) {
-    if (d.count > 0) {
-      cur++;
-      max = Math.max(max, cur);
-    } else cur = 0;
+    if (d.count > 0) { cur++; max = Math.max(max, cur); }
+    else cur = 0;
   }
   return max;
 }
@@ -142,17 +140,57 @@ function getBestDay(calendar) {
   }
   const max = Math.max(...map);
   if (max === 0) return "Not enough data";
-
-  const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   return days[map.indexOf(max)];
+}
+
+function getActiveDays(calendar) {
+  return calendar.filter((d) => d.count > 0).length;
+}
+
+function getBusiestDay(calendar) {
+  let best = { count: 0, label: "—" };
+  for (const d of calendar) {
+    if (d.count > best.count) {
+      const dt = new Date(d.date);
+      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      best = { count: d.count, label: `${months[dt.getMonth()]} ${dt.getDate()}` };
+    }
+  }
+  return best;
+}
+
+function countToLevel(n) {
+  if (n === 0) return 0;
+  if (n <= 3) return 1;
+  if (n <= 9) return 2;
+  if (n <= 19) return 3;
+  return 4;
+}
+
+function buildGrid(rawWeeks) {
+  return rawWeeks.map((w) =>
+    w.contributionDays.map((d) => countToLevel(d.contributionCount))
+  );
+}
+
+function computeAchievements(stats) {
+  const items = [];
+  if (stats.totalContributions >= 500)
+    items.push({ id: "elite", icon: "trophy", label: "Elite Contributor", note: `${stats.totalContributions.toLocaleString()} total contributions` });
+  else if (stats.totalContributions >= 100)
+    items.push({ id: "active", icon: "flame", label: "Active Developer", note: `${stats.totalContributions.toLocaleString()} total contributions` });
+  if (stats.longestStreak >= 30)
+    items.push({ id: "streak30", icon: "zap", label: "Monthly Streak", note: `${stats.longestStreak} consecutive days` });
+  else if (stats.longestStreak >= 7)
+    items.push({ id: "streak7", icon: "zap", label: "Week Streak", note: `${stats.longestStreak} consecutive days` });
+  if (stats.totalPRs >= 20)
+    items.push({ id: "pr20", icon: "pr", label: "PR Machine", note: `${stats.totalPRs} pull requests opened` });
+  if (stats.totalReviews >= 10)
+    items.push({ id: "reviewer", icon: "code", label: "Code Reviewer", note: `${stats.totalReviews} reviews given` });
+  if (stats.topLanguages?.length >= 3)
+    items.push({ id: "polyglot", icon: "globe", label: "Polyglot", note: `Pushed in ${stats.topLanguages.length} languages` });
+  return items;
 }
 
 function getTopLanguages(repos) {
@@ -197,6 +235,7 @@ function getTopRepos(repos) {
       name: x.repository.name,
       url: x.repository.url,
       contributions: x.contributions.totalCount,
+      stars: x.repository.stargazerCount || 0,
     }))
     .sort((a, b) => b.contributions - a.contributions)
     .slice(0, 5);
@@ -319,35 +358,64 @@ app.get("/api/wrapped/:username", async (req, res) => {
     });
     const rateLimitData = await rateLimitResponse.json();
 
+    const curYear = new Date().getFullYear();
+    const totalContributions = data.user.contributionsCollection.contributionCalendar.totalContributions;
+    const totalCommits = data.user.contributionsCollection.totalCommitContributions;
+    const totalIssues = data.user.contributionsCollection.totalIssueContributions;
+    const totalPRs = data.user.contributionsCollection.totalPullRequestContributions;
+    const totalReviews = data.user.contributionsCollection.totalPullRequestReviewContributions;
+    const longestStreak = calculateStreak(calendar);
+    const activeDays = getActiveDays(calendar);
+    const topLanguages = getTopLanguages(data.user.contributionsCollection.commitContributionsByRepository);
+    const topRepos = getTopRepos(data.user.contributionsCollection.commitContributionsByRepository);
+
+    const partialStats = { totalContributions, totalCommits, totalIssues, totalPRs, totalReviews, longestStreak, topLanguages };
+
     const response = {
+      year: curYear,
+
+      user: {
+        login: data.user.login,
+        name: data.user.name || data.user.login,
+        avatarUrl: data.user.avatarUrl,
+        identiconSeed: data.user.login,
+        joined: new Date(data.user.createdAt).getFullYear().toString(),
+        followers: data.user.followers.totalCount,
+      },
+
+      // legacy flat fields (keep for backwards compat)
       login: data.user.login,
       name: data.user.name,
       avatarUrl: data.user.avatarUrl,
+      username: data.user.login,
 
-      totalContributions:
-        data.user.contributionsCollection.contributionCalendar
-          .totalContributions,
+      totalContributions,
+      totalCommits,
+      totalIssues,
+      totalPRs,
+      totalReviews,
 
-      totalCommits: data.user.contributionsCollection.totalCommitContributions,
+      topLanguages,
+      topRepos,
 
-      totalIssues: data.user.contributionsCollection.totalIssueContributions,
-
-      totalPRs: data.user.contributionsCollection.totalPullRequestContributions,
-
-      topLanguages: getTopLanguages(
-        data.user.contributionsCollection.commitContributionsByRepository
-      ),
-
-      topRepos: getTopRepos(
-        data.user.contributionsCollection.commitContributionsByRepository
-      ),
-
-      streak: calculateStreak(calendar),
+      streak: longestStreak,
+      longestStreak,
+      activeDays,
       bestDay: getBestDay(calendar),
+      busiestDay: getBusiestDay(calendar),
 
       monthlyCommits: getMonthlyCommits(calendar),
 
-      growth: growth,
+      grid: buildGrid(data.user.contributionsCollection.contributionCalendar.weeks),
+
+      growth: growth ? {
+        contributions: growth.overallGrowth,
+        commits: growth.commitsGrowth,
+        prs: growth.prsGrowth,
+        issues: growth.issuesGrowth,
+      } : null,
+
+      achievements: computeAchievements(partialStats),
 
       rateLimit: {
         remaining: rateLimitData.resources.graphql.remaining,
