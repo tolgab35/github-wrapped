@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const EXAMPLES = ["torvalds", "gaearon", "sindresorhus"];
+const EXAMPLES = ["torvalds", "gaearon", "tolgab35"];
 
 // Deterministic decorative backdrop grid
 function BackdropGrid() {
